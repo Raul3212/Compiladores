@@ -1,8 +1,8 @@
 from copy import copy
 
-def areAllIn(lista1, lista2):
-    for i in lista1:
-        if i not in lista2:
+def areAllNullable(lista, nullables):
+    for i in lista:
+        if not nullables[i] == False:
             return False
     return True
 
@@ -30,15 +30,17 @@ class GLC:
     def getFiFoN(self):
         fi = {}
         fo = {}
-        nullables = []
+        nullables = {}
 
         #Inicializacao
         for nt in self.__nterminais:
             fi[nt] = set([])
             fo[nt] = set([])
+            nullables[nt] = False
         for t in self.__terminais:
             fi[t] = set([t])
             fo[t] = set([])
+            nullables[t] = False
 
         while True:
             fi2 = copy(fi)
@@ -48,16 +50,16 @@ class GLC:
                 for g in self.__regras[X]:
                     Y = g.split()
                     k = len(Y)
-                    if (Y in self.__nterminais and areAllIn(Y, nullables)) or k == 0:
-                        nullables.append(X)
+                    if (Y in self.__nterminais and areAllNullable(Y, nullables)) or k == 0:
+                        nullables[X] = True
                     for i in range(k):
                         j = i+1
                         while j < k:
-                            if areAllIn(Y[0:i], nullables) or k == 0:
+                            if areAllNullable(Y[0:i], nullables):
                                 fi[X] = fi[X].union(fi[Y[i]])
-                            if areAllIn(Y[i+1:k], nullables) or i == k-1:
+                            if areAllNullable(Y[i+1:k], nullables):
                                 fo[Y[i]] = fo[Y[i]].union(fo[X])
-                            if areAllIn(Y[i+1:j], nullables) or i+1 == j:
+                            if areAllNullable(Y[i+1:j], nullables):
                                 fo[Y[i]] = fo[Y[i]].union(fi[Y[j]])
                             j += 1
             if (fo == fo2) and (fi == fi2) and (nullables == nullables2):
@@ -75,5 +77,8 @@ glc.addRegra("E", "( S , E )")
 glc.addRegra("L", "E")
 glc.addRegra("L", "L , E")
 
-(fi, fo, null) = glc.getFiFoN()
-print fi["E"]
+# (fi, fo, null) = glc.getFiFoN()
+# print fi["S"]
+# print fi["E"]
+# print fi["L"]
+# print null
