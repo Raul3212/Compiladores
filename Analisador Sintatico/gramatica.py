@@ -11,13 +11,17 @@ class GLC:
         self.__terminais = terminais
         self.__nterminais = []
         self.__regras = []
-        self.__nullables = []
+        self.__nullables = set([])
+
+    def __findNullables(self):
+        for (S, P) in self.__regras:
+            if P == "" or P in self.__nullables:
+                self.__nullables.add(S)
 
     def addRegra(self, (nt, r)):
         self.__regras.append((nt, r))
         self.__nterminais.append(nt)
-        if r == "" and nt not in self.__nullables:
-            self.__nullables.append(nt)
+        self.__findNullables()
 
     def getGeracoes(self, nterminal):
         regras = []
@@ -32,16 +36,30 @@ class GLC:
     def getNTerminais(self):
         return self.__nterminais
 
+    def getNullables(self):
+        return self.__nullables
+
     def getFirst(self, simbolo):
         if simbolo in self.getTerminais():
             return set([simbolo])
         first = set([])
         for prod in self.getGeracoes(simbolo):
-            Y = prod.split()
-            if Y[0] in self.getTerminais():
-                first.add(Y[0])
-            elif Y[0] in self.getNTerminais() and not Y[0] == simbolo:
-                first = first.union(self.getFirst(Y[0]))
+            if prod != "":
+                Y = prod.split()
+                k = len(Y)
+                if Y[0] in self.getTerminais():
+                    first.add(Y[0])
+                else:
+                    if not Y[0] == simbolo:
+                        first = first.union(self.getFirst(Y[0]))
+                    if Y[0] in self.getNullables():
+                        i = 1
+                        while i < k:
+                            first = first.union(self.getFirst(Y[i]))
+                            if Y[i] not in self.getNullables():
+                                break
+                            i+=1
+
         return first
 
     def getFollow(self, simbolo):
@@ -50,13 +68,18 @@ class GLC:
             Y = prod.split()
             k = len(Y)
             for i in range(k):
-                if Y[i] == simbolo:
-                    if i < k-1:
-                        # if Y[i+1] not in self.getNullables():
-                        follow = follow.union(self.getFirst(Y[i+1]))
+                if Y[i] == simbolo and i < k-1:
+                    follow = follow.union(self.getFirst(Y[i+1]))
+                    if Y[i+1] in self.getNullables():
+                        j = i+2
+                        while j < k:
+                            follow = follow.union(self.getFirst(Y[j]))
+                            if Y[j] not in self.getNullables():
+                                break
+                            j+=1
         return follow
 
-glc = GLC([";", "id", ":=", "print", "(", ")", "num", "+", ","])
+glc = GLC([";", "id", ":=", "print", "(", ")", "num", "+", ",", "a"])
 glc.addRegra(("S", "S ; S"))
 glc.addRegra(("S", "id := E"))
 glc.addRegra(("S", "print ( L )"))
