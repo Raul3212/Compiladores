@@ -10,75 +10,60 @@ class GLC:
     def __init__(self, terminais):
         self.__terminais = terminais
         self.__nterminais = []
-        self.__regras = {}
+        self.__regras = []
 
-    def addRegra(self, gerador, gerado):
-        if gerador not in self.__nterminais:
-            self.__nterminais.append(gerador)
-        try:
-            self.__regras[gerador].append(gerado)
-        except:
-            self.__regras[gerador] = []
-            self.__regras[gerador].append(gerado)
+    def addRegra(self, (nt, r)):
+        self.__regras.append((nt, r))
+        self.__nterminais.append(nt)
 
-    def getGeracoes(self, gerador):
-        try:
-            return self.__regras[gerador]
-        except:
-            return None
+    def getGeracoes(self, nterminal):
+        regras = []
+        for (nt, r) in self.__regras:
+            if nt == nterminal:
+                regras.append(r)
+        return regras
 
-    def getFiFoN(self):
-        fi = {}
-        fo = {}
-        nullables = {}
+    def getTerminais(self):
+        return self.__terminais
 
-        #Inicializacao
-        for nt in self.__nterminais:
-            fi[nt] = set([])
-            fo[nt] = set([])
-            nullables[nt] = False
-        for t in self.__terminais:
-            fi[t] = set([t])
-            fo[t] = set([])
-            nullables[t] = False
+    def getNTerminais(self):
+        return self.__nterminais
 
-        while True:
-            fi2 = copy(fi)
-            fo2 = copy(fo)
-            nullables2 = copy(nullables)
-            for X in self.__regras:
-                for g in self.__regras[X]:
-                    Y = g.split()
-                    k = len(Y)
-                    if (Y in self.__nterminais and areAllNullable(Y, nullables)) or k == 0:
-                        nullables[X] = True
-                    for i in range(k):
-                        j = i+1
-                        while j < k:
-                            if areAllNullable(Y[0:i], nullables):
-                                fi[X] = fi[X].union(fi[Y[i]])
-                            if areAllNullable(Y[i+1:k], nullables):
-                                fo[Y[i]] = fo[Y[i]].union(fo[X])
-                            if areAllNullable(Y[i+1:j], nullables):
-                                fo[Y[i]] = fo[Y[i]].union(fi[Y[j]])
-                            j += 1
-            if (fo == fo2) and (fi == fi2) and (nullables == nullables2):
-                break
-        return (fi, fo, nullables)
+    def getFirst(self, simbolo):
+        if simbolo in self.getTerminais():
+            return set([simbolo])
+        first = set([])
+        for prod in self.getGeracoes(simbolo):
+            Y = prod.split()
+            if Y[0] in self.getTerminais():
+                first.add(Y[0])
+            elif Y[0] in self.getNTerminais() and not Y[0] == simbolo:
+                first = first.union(self.getFirst(Y[0]))
+        return first
+
+    def getFollow(self, simbolo):
+        follow = set([])
+        for (_ , prod) in self.__regras:
+            Y = prod.split()
+            k = len(Y)
+            for i in range(k):
+                if Y[i] == simbolo:
+                    if i < k-1:
+                        # if Y[i+1] not in self.getNullables():
+                        follow = follow.union(self.getFirst(Y[i+1]))
+        return follow
 
 glc = GLC([";", "id", ":=", "print", "(", ")", "num", "+", ","])
-glc.addRegra("S", "S ; S")
-glc.addRegra("S", "id := E")
-glc.addRegra("S", "print ( L )")
-glc.addRegra("E", "id")
-glc.addRegra("E", "num")
-glc.addRegra("E", "E + E")
-glc.addRegra("E", "( S , E )")
-glc.addRegra("L", "E")
-glc.addRegra("L", "L , E")
+glc.addRegra(("S", "S ; S"))
+glc.addRegra(("S", "id := E"))
+glc.addRegra(("S", "print ( L )"))
+glc.addRegra(("E", "id"))
+glc.addRegra(("E", "num"))
+glc.addRegra(("E", "E + E"))
+glc.addRegra(("E", "( S , E )"))
+glc.addRegra(("L", "E"))
+glc.addRegra(("L", "L , E"))
 
-# (fi, fo, null) = glc.getFiFoN()
-# print fi["S"]
-# print fi["E"]
-# print fi["L"]
-# print null
+print glc.getFollow('S')
+
+# print fi['L']

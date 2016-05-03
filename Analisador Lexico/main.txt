@@ -1,2 +1,1 @@
-String x = 10;
-int"abc"
+int//x = 10;
