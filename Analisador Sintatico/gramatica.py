@@ -11,10 +11,13 @@ class GLC:
         self.__terminais = terminais
         self.__nterminais = []
         self.__regras = []
+        self.__nullables = []
 
     def addRegra(self, (nt, r)):
         self.__regras.append((nt, r))
         self.__nterminais.append(nt)
+        if r == "" and nt not in self.__nullables:
+            self.__nullables.append(nt)
 
     def getGeracoes(self, nterminal):
         regras = []
