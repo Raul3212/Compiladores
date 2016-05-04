@@ -6,6 +6,12 @@ def areAllNullable(lista, nullables):
             return False
     return True
 
+def getStringFromList(list):
+    result = ""
+    for s in list:
+        result += (" " + s)
+    return result[1:]
+
 class GLC:
     def __init__(self, terminais):
         self.__terminais = terminais
@@ -39,7 +45,14 @@ class GLC:
     def getNullables(self):
         return self.__nullables
 
-    def getFirst(self, simbolo):
+    def getFirst(self, regra):
+        Y = regra.split()
+        if Y[0] not in self.getNullables() or len(Y) == 1:
+            return self.__getFirst(Y[0])
+        else:
+            return self.__getFirst(Y[0]).union(self.getFirst(Y[1]))
+
+    def __getFirst(self, simbolo):
         if simbolo in self.getTerminais():
             return set([simbolo])
         first = set([])
@@ -79,6 +92,29 @@ class GLC:
                             j+=1
         return follow
 
+    def closure(self, I):
+        while True:
+            I2 = copy(I)
+            for (A, prod, z) in I:
+                S = prod.split()
+                for s in range(len(S)-2):
+                    if S[s] == '.' and S[s+1] in self.getNTerminais():
+                        for y in self.getGeracoes(S[s+1]):
+                            for w in self.getFirst(S[s+2]+" "+z):
+                                I = I.union(set([(S[s+1], ". " + y, w)]))
+            if I2 == I:
+                break
+        return I
+
+    def goTo(self, I, X):
+        J = set([])
+        for (A, prod, z) in I:
+            S = prod.split()
+            for s in range(len(S)-1):
+                if S[s] == '.' and S[s+1] == X:
+                    J.add((A, getStringFromList(S[0:s]) + " " + X + ' . ' + getStringFromList(S[s+2:]), z))
+        return self.closure(J)
+
 glc = GLC([";", "id", ":=", "print", "(", ")", "num", "+", ",", "a"])
 glc.addRegra(("S", "S ; S"))
 glc.addRegra(("S", "id := E"))
@@ -90,6 +126,5 @@ glc.addRegra(("E", "( S , E )"))
 glc.addRegra(("L", "E"))
 glc.addRegra(("L", "L , E"))
 
-print glc.getFollow('S')
-
-# print fi['L']
+Y = set([('S', 'print ( . L )', '')])
+print glc.goTo(Y, 'L')
