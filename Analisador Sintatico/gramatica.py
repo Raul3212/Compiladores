@@ -44,11 +44,14 @@ class GLC:
         return self.__nterminais
 
     def getSymbols(self):
-        return self.getTerminais() + self.getNTerminais()
-
+        return self.getNTerminais() + self.getTerminais()
+    
+    def __getInitSymbol(self):
+        return self.__nterminais[0]
+    
     def getNullables(self):
         return self.__nullables
-
+                
     def getFirst(self, regra):
         Y = regra.split()
         if Y[0] not in self.getNullables() or len(Y) == 1:
@@ -126,7 +129,8 @@ class GLC:
                     J.add((A, getStringFromList(S[0:s]) + " " + X + ' . ' + getStringFromList(S[s+2:]), z))
         return self.closure(J)
 
-    def items(self, initSymbol):
+    def items(self):
+        initSymbol = self.__getInitSymbol()
         T = []
         T.append(self.closure(set([('S_', '. '+initSymbol, '$')])))
         while True:
@@ -139,8 +143,41 @@ class GLC:
             if T2 == T:
                 break
         return T
+    
+    def analisysTable(self):
+        initSymbol = self.__getInitSymbol()
+        table = []
+        C = self.items()
+        print C
+        #inicializando a tabela
+        for i in range(len(C)):
+            table.append({})
             
-
+        for I in C:
+            i = C.index(I)
+            if ('S_', ' S . ', '$') in I:
+                table[i]['$'] = 'ok'
+            
+            for (A, prod, z) in I:
+                Y = prod.split()
+                y = 0
+                while y < len(Y):
+                    if y < len(Y)-1:
+                        if Y[y] == '.' and Y[y+1] in self.getTerminais():
+                            g = self.goTo(I, Y[y+1])
+                            if g in C:
+                                j = C.index(g)
+                                table[i][Y[y+1]] = 's_'+str(j)
+                    y+=1
+                if Y[len(Y) - 1] == '.' and A != 'S_':
+                    table[i][z] = 'r_'+A+'_'+Y[len(Y) - 2]
+                
+                g = self.goTo(I, A)
+                if g in C:
+                    j = C.index(g)
+                    table[i][A] = j            
+        return table                
+                
 """glc = GLC([";", "id", ":=", "print", "(", ")", "num", "+", ",", "a"])
 glc.addRegra(("S", "S ; S"))
 glc.addRegra(("S", "id := E"))
@@ -167,5 +204,5 @@ glc.addRegra(('C', 'd'))
 
 #Y = set([('S', 'E .', ''), ('E', 'E . + T', '')])
 #print glc.goTo(Y, '+')
-I = glc.items('S')
-print glc.goTo(I[0], 'c')
+for c in glc.analisysTable():
+    print str(c) + '\n'
