@@ -26,7 +26,8 @@ class GLC:
 
     def addRegra(self, (nt, r)):
         self.__regras.append((nt, r))
-        self.__nterminais.append(nt)
+        if nt not in self.__nterminais:
+            self.__nterminais.append(nt)
         self.__findNullables()
 
     def getGeracoes(self, nterminal):
@@ -41,6 +42,9 @@ class GLC:
 
     def getNTerminais(self):
         return self.__nterminais
+
+    def getSymbols(self):
+        return self.getTerminais() + self.getNTerminais()
 
     def getNullables(self):
         return self.__nullables
@@ -97,11 +101,16 @@ class GLC:
             I2 = copy(I)
             for (A, prod, z) in I:
                 S = prod.split()
-                for s in range(len(S)-2):
+                for s in range(len(S)-1):
                     if S[s] == '.' and S[s+1] in self.getNTerminais():
                         for y in self.getGeracoes(S[s+1]):
-                            for w in self.getFirst(S[s+2]+" "+z):
-                                I = I.union(set([(S[s+1], ". " + y, w)]))
+                            if s < len(S) - 2:
+                                for w in self.getFirst(S[s+2]+" "+z):
+                                    if w == '':
+                                        w = '$'
+                                    I = I.union(set([(S[s+1], ". " + y, w)]))
+                            else:
+                                I = I.union(set([(S[s+1], ". " + y, '$')]))
             if I2 == I:
                 break
         return I
@@ -112,10 +121,27 @@ class GLC:
             S = prod.split()
             for s in range(len(S)-1):
                 if S[s] == '.' and S[s+1] == X:
+                    if z == '':
+                        z = '$'
                     J.add((A, getStringFromList(S[0:s]) + " " + X + ' . ' + getStringFromList(S[s+2:]), z))
         return self.closure(J)
 
-glc = GLC([";", "id", ":=", "print", "(", ")", "num", "+", ",", "a"])
+    def items(self, initSymbol):
+        T = []
+        T.append(self.closure(set([('S_', '. '+initSymbol, '$')])))
+        while True:
+            T2 = copy(T)
+            for I in T:
+                for X in self.getSymbols():
+                    aux = self.goTo(I, X)
+                    if aux not in T and aux != set([]):
+                        T.append(aux)
+            if T2 == T:
+                break
+        return T
+            
+
+"""glc = GLC([";", "id", ":=", "print", "(", ")", "num", "+", ",", "a"])
 glc.addRegra(("S", "S ; S"))
 glc.addRegra(("S", "id := E"))
 glc.addRegra(("S", "print ( L )"))
@@ -124,7 +150,22 @@ glc.addRegra(("E", "num"))
 glc.addRegra(("E", "E + E"))
 glc.addRegra(("E", "( S , E )"))
 glc.addRegra(("L", "E"))
-glc.addRegra(("L", "L , E"))
+glc.addRegra(("L", "L , E"))"""
 
-Y = set([('S', 'print ( . L )', '')])
-print glc.goTo(Y, 'L')
+"""glc = GLC(["+", "*", "(", ")", "id"])
+glc.addRegra(("E", "E + T"))
+glc.addRegra(("E", "T"))
+glc.addRegra(("T", "T * F"))
+glc.addRegra(("T", "F"))
+glc.addRegra(("F", "( E )"))
+glc.addRegra(("F", "id"))"""
+
+glc = GLC(['c', 'd'])
+glc.addRegra(('S', 'C C'))
+glc.addRegra(('C', 'c C'))
+glc.addRegra(('C', 'd'))
+
+#Y = set([('S', 'E .', ''), ('E', 'E . + T', '')])
+#print glc.goTo(Y, '+')
+I = glc.items('S')
+print glc.goTo(I[0], 'c')
