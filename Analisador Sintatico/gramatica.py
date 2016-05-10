@@ -13,30 +13,21 @@ def getStringFromList(list):
     return result[1:]
 
 class GLC:
-    def __init__(self, terminais):
-        self.__terminais = terminais
+    def __init__(self):
+        self.__terminais = []
         self.__nterminais = []
         self.__regras = []
         self.__nullables = set([])
 
-    def __findNullables(self):
-        for (S, P) in self.__regras:
-            if P == "" or P in self.__nullables:
-                self.__nullables.add(S)
+    def setTerminais(self, terminais):
+        self.__terminais = terminais
 
-    def addRegra(self, (nt, r)):
-        self.__regras.append((nt, r))
-        if nt not in self.__nterminais:
-            self.__nterminais.append(nt)
-        self.__findNullables()
+    def setNTerminais(self, nterminais):
+        self.__nterminais = nterminais
 
-    def getGeracoes(self, nterminal):
-        regras = []
-        for (nt, r) in self.__regras:
-            if nt == nterminal:
-                regras.append(r)
-        return regras
-
+    def setNullables(self, nullables):
+        self.__nullables = set(nullables)
+    
     def getTerminais(self):
         return self.__terminais
 
@@ -46,6 +37,19 @@ class GLC:
     def getSymbols(self):
         return self.getNTerminais() + self.getTerminais()
     
+    def getRegra(self, id):
+        return self.__regras[id]
+        
+    def addRegra(self, (nt, r)):
+        self.__regras.append((nt, r))
+
+    def getGeracoes(self, nterminal):
+        regras = []
+        for (nt, r) in self.__regras:
+            if nt == nterminal:
+                regras.append(r)
+        return regras
+
     def __getInitSymbol(self):
         return self.__nterminais[0]
     
@@ -54,11 +58,13 @@ class GLC:
                 
     def getFirst(self, regra):
         Y = regra.split()
-        if Y[0] not in self.getNullables() or len(Y) == 1:
-            return self.__getFirst(Y[0])
-        else:
-            return self.__getFirst(Y[0]).union(self.getFirst(Y[1]))
-
+        first = set([])
+        for y in Y:
+            first = first.union(self.__getFirst(y))
+            if y not in self.getNullables():
+                break
+        return first
+             
     def __getFirst(self, simbolo):
         if simbolo in self.getTerminais():
             return set([simbolo])
@@ -79,7 +85,6 @@ class GLC:
                             if Y[i] not in self.getNullables():
                                 break
                             i+=1
-
         return first
 
     def getFollow(self, simbolo):
@@ -108,7 +113,7 @@ class GLC:
                     if S[s] == '.' and S[s+1] in self.getNTerminais():
                         for y in self.getGeracoes(S[s+1]):
                             if s < len(S) - 2:
-                                for w in self.getFirst(S[s+2]+" "+z):
+                                for w in self.getFirst(getStringFromList(S[s+2:])+' '+z):
                                     if w == '':
                                         w = '$'
                                     I = I.union(set([(S[s+1], ". " + y, w)]))
@@ -122,17 +127,19 @@ class GLC:
         J = set([])
         for (A, prod, z) in I:
             S = prod.split()
-            for s in range(len(S)-1):
-                if S[s] == '.' and S[s+1] == X:
-                    if z == '':
-                        z = '$'
-                    J.add((A, getStringFromList(S[0:s]) + " " + X + ' . ' + getStringFromList(S[s+2:]), z))
+            for s in range(len(S)):
+                if s < len(S)-1:
+                    if S[s] == '.' and S[s+1] == X:
+                        if z == '':
+                            z = '$'
+                        J.add((A, getStringFromList(S[0:s]).strip() + " " + X + ' . ' + getStringFromList(S[s+2:]).strip(), z))
         return self.closure(J)
 
     def items(self):
         initSymbol = self.__getInitSymbol()
         T = []
-        T.append(self.closure(set([('S_', '. '+initSymbol, '$')])))
+        (S_, prod) = self.__regras[0]
+        T.append(self.closure(set([(S_, '. '+prod[0:len(prod)-1], '$')])))
         while True:
             T2 = copy(T)
             for I in T:
@@ -148,10 +155,12 @@ class GLC:
         initSymbol = self.__getInitSymbol()
         table = []
         C = self.items()
-        print C
+        
         #inicializando a tabela
         for i in range(len(C)):
             table.append({})
+            for x in self.getSymbols():
+                table[i][x] = '-1'
             
         for I in C:
             i = C.index(I)
@@ -170,39 +179,11 @@ class GLC:
                                 table[i][Y[y+1]] = 's_'+str(j)
                     y+=1
                 if Y[len(Y) - 1] == '.' and A != 'S_':
-                    table[i][z] = 'r_'+A+'_'+Y[len(Y) - 2]
+                    indexRegra = self.__regras.index((A, prod.replace('.', '').strip()))
+                    table[i][z] = 'r_'+str(indexRegra)
                 
                 g = self.goTo(I, A)
                 if g in C:
                     j = C.index(g)
-                    table[i][A] = j            
+                    table[i][A] = 'g_'+str(j)            
         return table                
-                
-"""glc = GLC([";", "id", ":=", "print", "(", ")", "num", "+", ",", "a"])
-glc.addRegra(("S", "S ; S"))
-glc.addRegra(("S", "id := E"))
-glc.addRegra(("S", "print ( L )"))
-glc.addRegra(("E", "id"))
-glc.addRegra(("E", "num"))
-glc.addRegra(("E", "E + E"))
-glc.addRegra(("E", "( S , E )"))
-glc.addRegra(("L", "E"))
-glc.addRegra(("L", "L , E"))"""
-
-"""glc = GLC(["+", "*", "(", ")", "id"])
-glc.addRegra(("E", "E + T"))
-glc.addRegra(("E", "T"))
-glc.addRegra(("T", "T * F"))
-glc.addRegra(("T", "F"))
-glc.addRegra(("F", "( E )"))
-glc.addRegra(("F", "id"))"""
-
-glc = GLC(['c', 'd'])
-glc.addRegra(('S', 'C C'))
-glc.addRegra(('C', 'c C'))
-glc.addRegra(('C', 'd'))
-
-#Y = set([('S', 'E .', ''), ('E', 'E . + T', '')])
-#print glc.goTo(Y, '+')
-for c in glc.analisysTable():
-    print str(c) + '\n'
