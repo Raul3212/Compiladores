@@ -108,17 +108,15 @@ class GLC:
         while True:
             I2 = copy(I)
             for (A, prod, z) in I:
-                S = prod.split()
-                for s in range(len(S)-1):
-                    if S[s] == '.' and S[s+1] in self.getNTerminais():
-                        for y in self.getGeracoes(S[s+1]):
-                            if s < len(S) - 2:
-                                for w in self.getFirst(getStringFromList(S[s+2:])+' '+z):
-                                    if w == '':
-                                        w = '$'
-                                    I = I.union(set([(S[s+1], ". " + y, w)]))
-                            else:
-                                I = I.union(set([(S[s+1], ". " + y, '$')]))
+                partes = prod.split('.')
+                X = partes[1].strip().split()
+                if X != []:
+                    if X[0] in self.getNTerminais():
+                        for y in self.getGeracoes(X[0]):
+                            for w in self.getFirst(getStringFromList(X[1:])+' '+z):
+                                if w == '':
+                                    w = '$'
+                                I = I.union(set([(X[0], '. '+y, w)])) 
             if I2 == I:
                 break
         return I
@@ -139,7 +137,7 @@ class GLC:
         initSymbol = self.__getInitSymbol()
         T = []
         (S_, prod) = self.__regras[0]
-        T.append(self.closure(set([(S_, '. '+prod[0:len(prod)-1], '$')])))
+        T.append(self.closure(set([(S_, '. '+prod, '$')])))
         while True:
             T2 = copy(T)
             for I in T:

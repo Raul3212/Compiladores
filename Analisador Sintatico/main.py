@@ -8,9 +8,9 @@ def analisadorSintatico(glc, tokens):
     estadoAtual = 0
     listaTokens = tokens.split()
     for t in listaTokens:
-        acao = int(tabela[estadoAtual][t])
+        acao = tabela[estadoAtual][t]
         partes = acao.split('_')
-        if acao == -1:
+        if acao == "-1":
             print "Erro sintatico -> " + t 
             break
 
@@ -26,7 +26,7 @@ def analisadorSintatico(glc, tokens):
             estadoAtual = int(tabela[estadoAtual][X])
             
         elif partes[0] == 'g':
-            estadoAtual = int(partes[1])
+            estadoAtual = C.index(C[partes[1]])
             
         elif partes == "ok":
             print "Sucesso"    
@@ -34,7 +34,7 @@ def analisadorSintatico(glc, tokens):
 
 glc = GLC()
 
-glc.setTerminais([";", "id", ":=", "print", "(", ")", "num", "+", ","])
+glc.setTerminais([";", "+", "id", ":=", "print", "(", ")", "num", ",", "$"])
 glc.setNTerminais(["S", "E", "L"])
 
 glc.addRegra(("S_", "S $"))
@@ -48,29 +48,8 @@ glc.addRegra(("E", "( S , E )"))
 glc.addRegra(("L", "E"))
 glc.addRegra(("L", "L , E"))
 
-"""glc.setTerminais(['+', '*', '(', ')', 'id'])
-glc.setNTerminais(['S_', 'E', 'T', 'F'])
-
-glc.addRegra(("S_", "E $"))
-glc.addRegra(("E", "E + T"))
-glc.addRegra(("E", "T"))
-glc.addRegra(("T", "T * F"))
-glc.addRegra(("T", "F"))
-glc.addRegra(("F", "( E )"))
-glc.addRegra(("F", "id"))"""
-
-"""glc.setNTerminais(['S', 'C'])
-glc.setTerminais(['c', 'd'])
-
-glc.addRegra(('S_', 'S $'))
-glc.addRegra(('S', 'C C'))
-glc.addRegra(('C', 'c C'))
-glc.addRegra(('C', 'd'))"""
-
-# C = glc.analisysTable()
-# for i in C:
-#     print i
-#     print "\n\n" 
+C = glc.analisysTable()
+print len(C)
 
 for l in sys.stdin:
     print analisadorSintatico(glc, l)
