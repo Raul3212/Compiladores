@@ -1,15 +1,9 @@
 from copy import copy
 
-def areAllNullable(lista, nullables):
-    for i in lista:
-        if not nullables[i] == False:
-            return False
-    return True
-
 def getStringFromList(list):
     result = ""
     for s in list:
-        result += (" " + s)
+        result += (" " + s.strip())
     return result[1:]
 
 class GLC:
@@ -50,9 +44,6 @@ class GLC:
                 regras.append(r)
         return regras
 
-    def __getInitSymbol(self):
-        return self.__nterminais[0]
-    
     def getNullables(self):
         return self.__nullables
                 
@@ -113,31 +104,28 @@ class GLC:
                 if X != []:
                     if X[0] in self.getNTerminais():
                         for y in self.getGeracoes(X[0]):
-                            for w in self.getFirst(getStringFromList(X[1:])+' '+z):
+                            for w in self.getFirst(getStringFromList(X[1:]).strip()+' '+z):
                                 if w == '':
                                     w = '$'
-                                I = I.union(set([(X[0], '. '+y, w)])) 
+                                I = I.union(set([(X[0], '.'+y.strip(), w)])) 
             if I2 == I:
                 break
         return I
 
-    def goTo(self, I, X):
+    def goTo(self, I, C):
         J = set([])
         for (A, prod, z) in I:
-            S = prod.split()
-            for s in range(len(S)):
-                if s < len(S)-1:
-                    if S[s] == '.' and S[s+1] == X:
-                        if z == '':
-                            z = '$'
-                        J.add((A, getStringFromList(S[0:s]).strip() + " " + X + ' . ' + getStringFromList(S[s+2:]).strip(), z))
+            partes = prod.split('.')
+            X = partes[1].strip().split()
+            if X != []:
+                if X[0] == C:
+                    J.add((A, partes[0].strip() +' '+ X[0].strip() + '.' + getStringFromList(X[1:]).strip(), z))
         return self.closure(J)
 
     def items(self):
-        initSymbol = self.__getInitSymbol()
         T = []
         (S_, prod) = self.__regras[0]
-        T.append(self.closure(set([(S_, '. '+prod, '$')])))
+        T.append(self.closure(set([(S_, '.'+prod.strip(), '$')])))
         while True:
             T2 = copy(T)
             for I in T:
@@ -150,7 +138,6 @@ class GLC:
         return T
     
     def analisysTable(self):
-        initSymbol = self.__getInitSymbol()
         table = []
         C = self.items()
         
@@ -162,26 +149,24 @@ class GLC:
             
         for I in C:
             i = C.index(I)
-            if ('S_', ' S . ', '$') in I:
-                table[i]['$'] = 'ok'
-            
             for (A, prod, z) in I:
-                Y = prod.split()
-                y = 0
-                while y < len(Y):
-                    if y < len(Y)-1:
-                        if Y[y] == '.' and Y[y+1] in self.getTerminais():
-                            g = self.goTo(I, Y[y+1])
-                            if g in C:
-                                j = C.index(g)
-                                table[i][Y[y+1]] = 's_'+str(j)
-                    y+=1
-                if Y[len(Y) - 1] == '.' and A != 'S_':
-                    indexRegra = self.__regras.index((A, prod.replace('.', '').strip()))
+                Y = prod.split('.')
+                B = Y[1].strip().split()
+                if B != []:
+                    if B[0] in self.getTerminais() and self.goTo(I, B[0]) in C:
+                        j = C.index(self.goTo(I, B[0]))
+                        table[i][B[0]] = 's_'+str(j)
+                  
+                elif B == [] and A != 'S_':
+                    indexRegra = self.__regras.index((A, Y[0].strip()))
                     table[i][z] = 'r_'+str(indexRegra)
+                
+                elif B == [] and A == 'S_':
+                    table[i]['$'] = 'ok'
                 
                 g = self.goTo(I, A)
                 if g in C:
                     j = C.index(g)
                     table[i][A] = 'g_'+str(j)            
-        return table                
+            
+        return table    
