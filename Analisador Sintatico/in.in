@@ -1,1 +1,0 @@
-id := ( print ( id + num ) , num ) ; id := ( print ( id + num ) , num ) ; id := ( print ( id + num ) , num ) ; id := ( print ( id + num ) , num ) ; id := ( print ( id + num ) , num ) ; id := ( print ( id + num ) , num ) ; id := ( print ( id + num ) , num ) ; print ( ( id := num , id + id ) )
