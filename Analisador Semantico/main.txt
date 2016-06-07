@@ -1,0 +1,16 @@
+int x;
+int y;
+int z;
+
+String a;
+String b;
+String c;
+
+x = y + z;
+a = b + c;
+
+String toString(int a, String c){
+    return "num" + c;
+} 
+
+a = toString(x, "c") + a + b + c + toString(z, "raul");
