@@ -1,0 +1,17 @@
+Para executar:
+	python main.py < arquivo_codigo.extensao
+
+LIMITAÇÕES: 
+>> A verificação dos tipos de parâmetros enviados na 
+chamada de uma função é feita apenas para um único valor ou variável,
+ou seja, não há verificação de tipos quando passa-se uma expressão
+por parâmetro.
+
+>> No linux estava tendo problema ao ler um código indentado.
+Ainda não sei o motivo. Quando rodo no Windows funciona normal.
+Para todos os casos é remover os espaços que antecedem as linhas.
+
+
+OBS.: Rode com moderação :D
+
+

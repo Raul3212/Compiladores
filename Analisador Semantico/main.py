@@ -15,8 +15,7 @@ except Exception, e:
     print e
 
 (var, fun) = extrairIDs(tokens)
-
-verificarUsoVariaveis(tokens, var) 
-verificarUsoFuncoes(tokens, var, fun) 
-verificarAtribuicoes(tokens, var, fun) 
-verificarReturnsFuncoes(tokens, var, fun)
+if (var, fun) != ([], []):
+    if verificarUsoVariaveis(tokens, var) and verificarUsoFuncoes(tokens, var, fun): 
+        if verificarAtribuicoes(tokens, var, fun) and verificarReturnsFuncoes(tokens, var, fun):
+            print "Sucesso!"

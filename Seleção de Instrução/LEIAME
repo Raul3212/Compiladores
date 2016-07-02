@@ -1,0 +1,18 @@
+1 - SOBRE A IMPRESSÃO DA ÁRVORE:
+	
+	-> Cada nó é mostrado na forma de tupla
+	onde o primeiro valor corresponde ao valor
+	próprio do nó (extraído da expressão) e o 
+	segundo é um ID para o padrão ao qual ele 
+	faz parte.
+	
+	-> Nós que possuem o segundo valor da tupla
+	iguais entre si fazem parte de um mesmo padrão.
+	Isso independe da ordem e da "descontinuidade"
+	entre os padrões. (ex.: podem haver os padrões
+	1 e 5, mas não haver nenhum outro entre eles, MUHAHA).
+	
+2 - SOBRE AS INSTRUÇÕES:
+	
+	-> A contagem de registradores ainda está meia (ou 99%)
+	bugada. Piedade(!). 

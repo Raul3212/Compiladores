@@ -25,9 +25,9 @@ def extrairIDs(tokens):
         
         #Caso de ser variável    
         if (tokens[i] in tipos) and tokens[i+1][:2] == 'ID' and tokens[i+2] != 'LPAREN' and tokens[i-1] != 'LPAREN' and tokens[i-1] != 'COMMA':
-            if existeDefinicaoID(variaveis, funcoes, tokens[i+1][3:-1], escopo, idEscopo):
+            if existeDefinicaoIDNoEscopo(variaveis, funcoes, tokens[i+1][3:-1], escopo, idEscopo):
                 print "Variavel '"+ tokens[i+1][3:-1] +"' causa ambiguidade."
-                return (variaveis, funcoes)
+                return ([], [])
             variaveis.append((tokens[i], tokens[i+1][3:-1], escopo, idEscopo))  
         
         #Caso encontre uma função
@@ -40,21 +40,21 @@ def extrairIDs(tokens):
                 if tokens[i+5] == 'COMMA':
                     variaveis.append((tokens[i+6], tokens[i+7][3:-1], escopo+str(contEscopo), idEscopo))
                     
-                    if existeDefinicaoID(variaveis, funcoes, tokens[i+1][3:-1], escopo, idEscopo):
+                    if existeDefinicaoIDNoEscopo(variaveis, funcoes, tokens[i+1][3:-1], escopo, idEscopo):
                         print "Funcao '"+ tokens[i+1][3:-1] +"("+ tokens[i+3] +", "+ tokens[i+6] +")' causa ambiguidade."
-                        return (variaveis, funcoes)
+                        return ([], [])
                     #Adiciona funcao com 2 parâmetros
                     funcoes.append((tokens[i], tokens[i+1][3:-1], tokens[i+3], tokens[i+6], escopo, idEscopo))
                 else:
-                    if existeDefinicaoID(variaveis, funcoes, tokens[i+1][3:-1], escopo, idEscopo):
+                    if existeDefinicaoIDNoEscopo(variaveis, funcoes, tokens[i+1][3:-1], escopo, idEscopo):
                         print "Funcao '"+ tokens[i+1][3:-1] +"("+ tokens[i+3] +")' causa ambiguidade."
-                        return (variaveis, funcoes)
+                        return ([], [])
                     #Adiciona funcao com 1 parâmetro
                     funcoes.append((tokens[i], tokens[i+1][3:-1], tokens[i+3], None, escopo, idEscopo))
             else:
-                if existeDefinicaoID(variaveis, funcoes, tokens[i+1][3:-1], escopo, idEscopo):
+                if existeDefinicaoIDNoEscopo(variaveis, funcoes, tokens[i+1][3:-1], escopo, idEscopo):
                     print "Funcao '"+ tokens[i+1][3:-1] +"()' causa ambiguidade."
-                    return (variaveis, funcoes)
+                    return ([], [])
                 #Adiciona funcao sem parâmetros
                 funcoes.append((tokens[i], tokens[i+1][3:-1], None, None, escopo, idEscopo))
                     
@@ -77,7 +77,17 @@ def existeDefinicaoID(variaveis, funcoes, nome, escopo, idEscopo):
             return True
     
     return False
-        
+
+def existeDefinicaoIDNoEscopo(variaveis, funcoes, nome, escopo, idEscopo):
+    for (t, n, s, ids) in variaveis:
+        if (int(s) == int(escopo) and ids <= idEscopo) and n == nome:
+            return True
+            
+    for (t, f, p1, p2, s, ids) in funcoes:
+        if (int(s) == int(escopo) and ids <= idEscopo) and f == nome:
+            return True
+    
+    return False        
 
 def pegarFuncoesDisponiveis(funcoes, nome, tp1, tp2, escopo, idEscopo):
     fs = []
@@ -172,7 +182,7 @@ def verificarUsoVariaveis(tokens, variaveis):
             
         if tokens[i][:2] == 'ID' and tokens[i-1] not in tipos and tokens[i+1] != 'LPAREN':
             if not existeDefinicaoID(variaveis, [], tokens[i][3:-1], escopo, idEscopo):
-                print "Variavel '" + tokens[i][3:-1] + "' nao esta definida."
+                print "Variavel '" + tokens[i][3:-1] + "' nao esta definida neste local."
                 return False
     return True        
 
@@ -201,7 +211,7 @@ def verificarUsoFuncoes(tokens, var, fun):
                     tipo1 = 'STRING'
                 funcoes = pegarFuncoesDisponiveis(fun, tokens[i][3:-1], tipo1, None, escopo, idEscopo)
                 if funcoes == []:
-                    print "Funcao '" + tokens[i][3:-1] + "("+ tipo1 +")' nao esta definida."
+                    print "Funcao '" + tokens[i][3:-1] + "("+ tipo1 +")' nao esta definida neste local."
                     return False
              
             #funcoes com dois parâmetro de valores        
@@ -218,7 +228,7 @@ def verificarUsoFuncoes(tokens, var, fun):
                     tipo2 = 'STRING'
                 funcoes = pegarFuncoesDisponiveis(fun, tokens[i][3:-1], tipo1, tipo2, escopo, idEscopo)
                 if funcoes == []:
-                    print "Funcao '" + tokens[i][3:-1] + "("+ tipo1 +", "+ tipo2 +")' nao esta definida."
+                    print "Funcao '" + tokens[i][3:-1] + "("+ tipo1 +", "+ tipo2 +")' nao esta definida neste local."
                     return False
              
             #funcoes com um parametro ID        
@@ -226,7 +236,7 @@ def verificarUsoFuncoes(tokens, var, fun):
                 tipo1 = pegarTipoVariavel(var, tokens[i+2][3:-1], escopo, idEscopo)
                 funcoes = pegarFuncoesDisponiveis(fun, tokens[i][3:-1], tipo1, None, escopo, idEscopo)
                 if funcoes == []:
-                    print "Funcao '" + tokens[i][3:-1] + "("+ tipo1 +")' nao esta definida."
+                    print "Funcao '" + tokens[i][3:-1] + "("+ tipo1 +")' nao esta definida neste local."
                     return False
              
             #funcoes comparametros ID e valor
@@ -239,7 +249,7 @@ def verificarUsoFuncoes(tokens, var, fun):
                     tipo2 = 'STRING'
                 funcoes = pegarFuncoesDisponiveis(fun, tokens[i][3:-1], tipo1, tipo2, escopo, idEscopo)
                 if funcoes == []:
-                    print "Funcao '" + tokens[i][3:-1] + "("+ tipo1 +", "+ tipo2 +")' nao esta definida."
+                    print "Funcao '" + tokens[i][3:-1] + "("+ tipo1 +", "+ tipo2 +")' nao esta definida neste local."
                     return False
              
             #funcoes comparametros valor e ID
@@ -252,7 +262,7 @@ def verificarUsoFuncoes(tokens, var, fun):
                 tipo2 = pegarTipoVariavel(var, tokens[i+4][3:-1], escopo, idEscopo)
                 funcoes = pegarFuncoesDisponiveis(fun, tokens[i][3:-1], tipo1, tipo2, escopo, idEscopo)
                 if funcoes == []:
-                    print "Funcao '" + tokens[i][3:-1] + "("+ tipo1 +", "+ tipo2 +")' nao esta definida."
+                    print "Funcao '" + tokens[i][3:-1] + "("+ tipo1 +", "+ tipo2 +")' nao esta definida neste local."
                     return False
              
             #funcoes com dois parametros IDs
@@ -261,7 +271,7 @@ def verificarUsoFuncoes(tokens, var, fun):
                 tipo2 = pegarTipoVariavel(var, tokens[i+4][3:-1], escopo, idEscopo)
                 funcoes = pegarFuncoesDisponiveis(fun, tokens[i][3:-1], tipo1, tipo2, escopo, idEscopo)
                 if funcoes == []:
-                    print "Funcao '" + tokens[i][3:-1] + "("+ tipo1 +", "+ tipo2 +")' nao esta definida."
+                    print "Funcao '" + tokens[i][3:-1] + "("+ tipo1 +", "+ tipo2 +")' nao esta definida neste local."
                     return False
     return True
 
